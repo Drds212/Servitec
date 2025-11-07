@@ -77,14 +77,14 @@ class AdminScreen extends StatelessWidget {
   Widget _buildDateFilterDropdown(AdminController controller) {
 
     final Map<DateTimeFilter, String> dateFilterOptions = {
-      DateTimeFilter.none: 'Todas las Fechas',
+      DateTimeFilter.none: 'Todas',
       DateTimeFilter.today: 'Hoy',
       DateTimeFilter.yesterday: 'Ayer',
       DateTimeFilter.lastWeek: 'Semana Anterior',
     };
 
     return DropdownButtonFormField<DateTimeFilter>(
-      value: controller.dateFilter,
+      initialValue: controller.dateFilter,
       icon: const Icon(Icons.calendar_month, color: Color(0xFF003366)),
       decoration: InputDecoration(
 
@@ -110,7 +110,7 @@ class AdminScreen extends StatelessWidget {
 
   Widget _buildStatusFilterDropdown(AdminController controller) {
     return DropdownButtonFormField<int?>(
-      value: controller.statusFilter,
+      initialValue: controller.statusFilter,
       icon: const Icon(Icons.filter_list, color: Color(0xFF003366)),
       decoration: InputDecoration(
         labelText: 'Filtrar Estado', 
@@ -122,7 +122,7 @@ class AdminScreen extends StatelessWidget {
       items: [
         const DropdownMenuItem<int?>(
           value: null,
-          child: Text('Todos los Estados'),
+          child: Text('Todos'),
         ),
         const DropdownMenuItem<int>(
           value: 1,
