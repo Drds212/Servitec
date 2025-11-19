@@ -231,15 +231,21 @@ class ServiceCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ID y Estado
-                Text(
-                  'Servicio #${servicio['id_servicio']}',
-                  style: TextStyle(
+                Expanded( 
+                  child: Text(
+                    'Servicio #${servicio['id_servicio']} \n ${servicio['descripcion'] ?? 'Sin descripción'}',
+                    style: TextStyle(
                       fontSize: 18, 
                       fontWeight: FontWeight.bold,
                       color: Colors.indigo.shade800,
+                    ),
                   ),
                 ),
+                
+                // Separador para espacio
+                const SizedBox(width: 8), 
+
+                // El Container del estado (botón)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
@@ -261,8 +267,8 @@ class ServiceCard extends StatelessWidget {
             const Divider(height: 20),
             _buildDetailRow('Usuario Solicitante:', servicio['usuario_nombre'] ?? 'N/A'),
             _buildDetailRow(
-              'Descripción:', 
-              servicio['descripcion'] ?? 'Sin descripción',
+              'Departamento:', 
+              servicio['departamento'] ?? 'N/A',
               isDescription: true,
             ),
             _buildDetailRow(

@@ -320,6 +320,7 @@ class TecnicoScreen extends StatelessWidget {
                 final serviceId = row['id_servicio'];
                 final id = row['id_servicio']?.toString() ?? 'N/A';
                 final title = row['descripcion']?.toString() ?? 'Sin Descripción';
+                final departament = row['departamento']?.toString() ?? 'Sin Descripción';
                 final estadoInt = row['estado'] as int? ?? 0;
                 
                 String estadoTexto = statusOptions[estadoInt] ?? 'Desconocido';
@@ -350,7 +351,12 @@ class TecnicoScreen extends StatelessWidget {
                       child: Text(id, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                     title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, )),
-                    subtitle: Text('Estado: $estadoTexto'),
+                    subtitle:Column(crossAxisAlignment: CrossAxisAlignment.start,
+                    children:<Widget> [
+                      Text('Estado: $estadoTexto'),
+                      Text('Departamento: $departament')
+                    ],
+                    ),
                     
                     // Contenedor de opciones de estado (Completado/Recibido)
                     trailing: PopupMenuButton<int>(

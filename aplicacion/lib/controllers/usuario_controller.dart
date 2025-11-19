@@ -7,7 +7,11 @@ class UserData {
   final String cedula;
   final String departamento; // Campo para almacenar el nombre del departamento
 
-  UserData({required this.nombre, required this.cedula, required this.departamento});
+  UserData({
+    required this.nombre,
+    required this.cedula,
+    required this.departamento,
+  });
 }
 
 class UsuarioController extends ChangeNotifier {
@@ -53,13 +57,14 @@ class UsuarioController extends ChangeNotifier {
       // Asume: La FK es 'departamento' y la columna con el nombre es 'nombre_departamento'.
       final response = await supabase
           .from('Usuario')
-          .select('nombre, departamento(nombre_departamento)') 
+          .select('nombre, departamento(nombre_departamento)')
           .eq('cedula', cedula)
           .single();
-      
+
       // La respuesta viene anidada: response['departamento'] es un Map.
-      final Map<String, dynamic>? departamentoData = response['departamento'] as Map<String, dynamic>?;
-      
+      final Map<String, dynamic>? departamentoData =
+          response['departamento'] as Map<String, dynamic>?;
+
       // 🎯 CAMBIO CLAVE 2: Extraer el nombre del campo anidado.
       final String nombreDepartamento = departamentoData != null
           ? departamentoData['nombre_departamento'] as String? ?? 'Desconocido'
@@ -68,7 +73,8 @@ class UsuarioController extends ChangeNotifier {
       _userData = UserData(
         nombre: response['nombre'] as String? ?? 'N/A',
         cedula: cedula,
-        departamento: nombreDepartamento, // Asignamos el nombre del departamento
+        departamento:
+            nombreDepartamento, // Asignamos el nombre del departamento
       );
     } on PostgrestException catch (e) {
       _setError('Error al cargar datos: ${e.message}');
@@ -93,27 +99,30 @@ class UsuarioController extends ChangeNotifier {
 
     // ✅ VALIDACIÓN: Asegurar que _userData está cargado y tiene el departamento
     if (_userData == null) {
-      _setError('Error: Los datos del usuario (departamento) no han sido cargados.');
+      _setError(
+        'Error: Los datos del usuario (departamento) no han sido cargados.',
+      );
       return false;
     }
 
     try {
       final int? usuarioId = int.tryParse(cedulaUsuario.trim());
-      
+
       if (usuarioId == null) {
         _setError('Error: La cédula del usuario debe ser un número válido.');
         return false;
       }
 
-      final String fechaActual = DateTime.now().toLocal().toIso8601String(); 
-      
+      final String fechaActual = DateTime.now().toLocal().toIso8601String();
+
       // 🎯 CAMBIO 3: Añadir el campo 'departamento' al mapa de inserción
       final Map<String, dynamic> newService = {
         'descripcion': descripcion.trim(),
         'estado': initialStatus,
         'usuario': usuarioId,
         'fecha': fechaActual,
-        'departamento': _userData!.departamento, // <-- Ahora es el nombre del departamento
+        'departamento':
+            _userData!.departamento, // <-- Ahora es el nombre del departamento
       };
 
       await supabase.from(tableName).insert(newService);
