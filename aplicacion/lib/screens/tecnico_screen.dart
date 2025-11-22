@@ -167,9 +167,7 @@ class TecnicoScreen extends StatelessWidget {
                           );
                           if (success) {
                             Navigator.of(dialogContext).pop();
-                            // SnackBar ya está dentro de updateReporte, pero lo mantengo aquí por si decides mover la lógica de UI
                           } else {
-                            // Muestra un error si falla
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Fallo al guardar reporte. Intente de nuevo.'), backgroundColor: Colors.red),
                             );
@@ -377,11 +375,11 @@ class TecnicoScreen extends StatelessWidget {
                             children: [
                               Icon(Icons.done_all, color: controller.getStatusColor(2)),
                               const SizedBox(width: 8),
-                              const Text('Completado (2)'),
+                              const Text('Completado'),
                             ],
                           ),
                         ),
-                        PopupMenuItem<int>(
+                        /*PopupMenuItem<int>(
                           value: 3,
                           enabled: estadoInt != 3,
                           child: Row(
@@ -391,7 +389,7 @@ class TecnicoScreen extends StatelessWidget {
                               const Text('Recibido (3)'),
                             ],
                           ),
-                        ),
+                        ),*/
                       ],
                     ),
                   ),

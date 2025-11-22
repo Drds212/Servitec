@@ -278,6 +278,14 @@ class ServiceCard extends StatelessWidget {
                   : 'N/A'),
             ),
             
+            if (isAssigned && servicio['fecha_asignado'] != null)
+              _buildDetailRow(
+                'Fecha Asignación:', 
+                (servicio['fecha_asignado'] is DateTime 
+                    ? _formatDate(servicio['fecha_asignado']) 
+                    : 'N/A'),
+              ),
+            
             _buildDetailRow(
               'Técnico Asignado:', 
               servicio['tecnico_nombre'] ?? 'No Asignado',
@@ -367,7 +375,7 @@ class ServiceCard extends StatelessWidget {
       initialTecnicoCedula = tecnicoData['cedula']?.toString();
     }
     
-    // ⭐ CORRECCIÓN CLAVE: Si es una ASIGNACIÓN nueva, preselecciona el primer técnico
+    // ⭐ Si es una ASIGNACIÓN nueva, preselecciona el primer técnico
     if (initialTecnicoCedula == null && controller.allTecnicos.isNotEmpty) {
       initialTecnicoCedula = controller.allTecnicos.first.cedula; 
     }
@@ -388,22 +396,25 @@ class ServiceCard extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text('Asignar Técnico a #${servicio['id_servicio']}'),
+          title: Text('Asignar Técnico a #${servicio['id_servicio']}'), // Ajuste para el desbordamiento
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Seleccione un Técnico',
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 1, vertical: 15),
                 ),
                 // Asegura que el valor inicial sea el preseleccionado (o nulo si no hay técnicos)
                 value: selectedTecnicoCedula, 
                 hint: const Text('Técnicos Disponibles'),
                 items: controller.allTecnicos.map((tecnico) {
                   return DropdownMenuItem<String>(
-                    value: tecnico.cedula, 
-                    child: Text('${tecnico.nombre} ${tecnico.cedula}'),
+                    value: tecnico.cedula,
+                    child: Text(
+                      '${tecnico.nombre} ${tecnico.cedula}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
@@ -423,7 +434,6 @@ class ServiceCard extends StatelessWidget {
             ),
             ElevatedButton(
               child: const Text('Asignar'),
-              // El botón se habilita si selectedTecnicoCedula NO es null
               onPressed: selectedTecnicoCedula == null || controller.isUpdating
                   ? null
                   : () {

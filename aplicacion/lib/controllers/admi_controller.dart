@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/supabase_client.dart'; 
+import '../services/supabase_client.dart';
 
 enum DateTimeFilter {
   none,
@@ -15,7 +15,7 @@ class AdminController extends ChangeNotifier {
   final String usuarioTableName = 'Usuario';
   final int pendingStatus = 1;
   final int completedStatus = 2;
-  final int receivedStatus = 3;
+  final int receivedStatus = 3; 
 
 
   List<Map<String, dynamic>> _allServicios = [];
@@ -42,10 +42,10 @@ class AdminController extends ChangeNotifier {
 
 
   AdminController() {
-    fetchData(); 
+    fetchData();
   }
 
-  //Establece el estado de carga 
+  //Establece el estado de carga
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
@@ -55,7 +55,7 @@ class AdminController extends ChangeNotifier {
     _isUpdating = value;
     notifyListeners();
   }
-  //Establece el mensaje de error 
+  //Establece el mensaje de error
   void _setError(String? message) {
     _errorMessage = message;
     notifyListeners();
@@ -64,36 +64,36 @@ class AdminController extends ChangeNotifier {
   void setStatusFilter(int? status) {
     if (_statusFilter != status) {
       _statusFilter = status;
-      fetchData(); 
+      fetchData();
     }
   }
 
-  // Establece el filtrado de fecha 
+  // Establece el filtrado de fecha
   void setDateFilter(DateTimeFilter filter) {
     if (_dateFilter != filter) {
       _dateFilter = filter;
       fetchData();
     }
   }
-  
+
   //Calcula la fecha de inicio para el filtro.
   DateTime _getStartDate(DateTimeFilter filter) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    
+
     switch (filter) {
       case DateTimeFilter.today:
         return today;
       case DateTimeFilter.yesterday:
-        // Desde el inicio de ayer hasta el final de hoy (filtrado por la consulta de Supabase)
+      // Desde el inicio de ayer hasta el final de hoy (filtrado por la consulta de Supabase)
         return today.subtract(const Duration(days: 1));
       case DateTimeFilter.lastWeek:
-        // Hace 7 días (inicio del día)
+      // Hace 7 días (inicio del día)
         return today.subtract(const Duration(days: 7));
       case DateTimeFilter.none:
       default:
-        // Sin filtro de fecha
-        return DateTime.fromMillisecondsSinceEpoch(0); 
+      // Sin filtro de fecha
+        return DateTime.fromMillisecondsSinceEpoch(0);
     }
   }
 
@@ -106,8 +106,8 @@ class AdminController extends ChangeNotifier {
           .order('nombre', ascending: true);
 
       _allTecnicos = response.map((row) => UserData(
-        cedula: row['cedula'].toString(), 
-        nombre: row['nombre'] as String? ?? 'N/A'
+          cedula: row['cedula'].toString(),
+          nombre: row['nombre'] as String? ?? 'N/A'
       )).toList();
       notifyListeners();
 
@@ -122,7 +122,7 @@ class AdminController extends ChangeNotifier {
   Future<void> fetchData() async {
     _setLoading(true);
     _setError(null);
-    
+
 
     if (_allTecnicos.isEmpty) {
       await fetchTecnicos();
@@ -133,36 +133,44 @@ class AdminController extends ChangeNotifier {
       var query = supabase
           .from(tableName)
 
-          .select('*, usuario(nombre), tecnico(nombre, cedula)'); 
-      
+          .select('*, usuario(nombre), tecnico(nombre, cedula)');
+
 
       if (_statusFilter != null) {
         query = query.eq('estado', _statusFilter!);
       }
 
-      //filtrado de fechas 
+      //filtrado de fechas
       if (_dateFilter != DateTimeFilter.none) {
         final startDate = _getStartDate(_dateFilter);
-        final startDateString = startDate.toIso8601String(); 
+        final startDateString = startDate.toIso8601String();
 
         query = query.gte('fecha', startDateString);
       }
 
 
       final List<Map<String, dynamic>> response = await query.order('fecha', ascending: false);
-      
+
 
       _allServicios = response.map((row) {
 
+        // Conversión segura de tipos de Supabase (string a DateTime)
         if (row['fecha'] is String) {
-          row['fecha'] = DateTime.parse(row['fecha']).toLocal(); 
+          row['fecha'] = DateTime.parse(row['fecha']).toLocal();
         }
+        
+        // ⭐ CORRECCIÓN APLICADA: Convertir fecha_asignado si existe
+        if (row['fecha_asignado'] is String && row['fecha_asignado'] != null) {
+          row['fecha_asignado'] = DateTime.parse(row['fecha_asignado']).toLocal();
+        }
+
         if (row['fecha_culminado'] is String && row['fecha_culminado'] != null) {
-          row['fecha_culminado'] = DateTime.parse(row['fecha_culminado']).toLocal(); 
+          row['fecha_culminado'] = DateTime.parse(row['fecha_culminado']).toLocal();
         }
+
         row['usuario_nombre'] = row['usuario'] != null ? row['usuario']['nombre'] : 'N/A';
         row['tecnico_nombre'] = row['tecnico'] != null ? row['tecnico']['nombre'] : 'No Asignado';
-        
+
         return row;
       }).toList();
 
@@ -170,14 +178,15 @@ class AdminController extends ChangeNotifier {
 
     } on PostgrestException catch (e) {
       _setError('Fallo al cargar datos de servicios: ${e.message}');
-      print('ERROR SUPABASE (Admin): ${e.message}'); 
+      print('ERROR SUPABASE (Admin): ${e.message}');
     } catch (e) {
       _setError('Fallo desconocido al cargar datos: ${e.toString()}');
     } finally {
       _setLoading(false);
     }
   }
-    //Asignacion de tecnico
+
+  // Asignacion de tecnico
   Future<void> assignTecnico(int serviceId, String tecnicoCedula, BuildContext context) async {
     _setIsUpdating(true);
     _setError(null);
@@ -186,8 +195,16 @@ class AdminController extends ChangeNotifier {
       final tecnicoData = _allTecnicos.firstWhere((t) => t.cedula == tecnicoCedula);
       final tecnicoNombre = tecnicoData.nombre;
 
+      // 1. Obtener y formatear la fecha de asignación
+      final now = DateTime.now().toLocal();
+      // Usar formato ISO 8601 extendido que es seguro y legible en texto.
+      final String formattedDate = now.toIso8601String();
+
+      // 2. Preparar los datos de actualización, incluyendo el técnico y la nueva fecha
       final updateData = {
         'tecnico': tecnicoCedula,
+        'fecha_asignado': formattedDate, 
+        'estado': receivedStatus, 
       };
 
       await supabase
@@ -197,22 +214,22 @@ class AdminController extends ChangeNotifier {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Servicio ID $serviceId asignado a $tecnicoNombre.'),
+          content: Text('Servicio ID $serviceId asignado a $tecnicoNombre. Fecha de asignación registrada.'),
           backgroundColor: Colors.indigo,
         ),
       );
 
-      await fetchData(); 
+      await fetchData();
 
     } on PostgrestException catch (e) {
       _setError('Error al asignar técnico: ${e.message}');
     } catch (e) {
-      _setError('Error inesperado al asignar técnico.');
+      _setError('Error inesperado al asignar técnico: ${e.toString()}');
     } finally {
       _setIsUpdating(false);
     }
   }
-  
+
   Color getStatusColor(int estado) {
     switch (estado) {
       case 1:
@@ -225,7 +242,7 @@ class AdminController extends ChangeNotifier {
         return Colors.grey;
     }
   }
-  
+
 
   String getStatusName(int estado) {
     switch (estado) {
